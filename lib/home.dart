@@ -1,14 +1,18 @@
 import 'dart:convert';
+import 'package:untitled/NewsView.dart';
+import 'package:untitled/category2.dart';
 import 'package:untitled/model.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:http/http.dart';
+
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
 
   @override
   _HomeState createState() => _HomeState();
 }
+
 
 class _HomeState extends State<Home> {
   TextEditingController searchController = new TextEditingController();
@@ -17,15 +21,11 @@ class _HomeState extends State<Home> {
   List<String> navBarItem = [
     "Top News",
     "India",
-    "World",
     "Finance",
     "Health"
   ];
 
   bool isLoading = true;
-
-  // need to make a different function for the carousel
-
   getNews()async {
     String url =
         "https://newsapi.org/v2/top-headlines?country=us&apiKey=4c6842085864405aa40688fd1a921192";
@@ -45,35 +45,35 @@ class _HomeState extends State<Home> {
     });
 
   }
-
-  // from chatgpt
-  // getNews() async {
-  //   String url =
-  //       "https://newsapi.org/v2/top-headlines?country=us&apiKey=4c6842085864405aa40688fd1a921192";
-  //   Response response = await get(Uri.parse(url));
-  //   Map data = jsonDecode(response.body);
-  //
-  //   setState(() {
-  //     // Clear lists before adding new data to avoid duplicates
-  //     // newsModelList.clear();
-  //     // newsModelListCarousel.clear();
-  //
-  //     data["articles"].forEach((element) {
-  //       NewsQueryModel newsQueryModel = NewsQueryModel.fromMap(element);
-  //       newsModelList.add(newsQueryModel);
-  //     });
-  //
-  //     // Add first 5 items to the carousel
-  //     newsModelListCarousel = newsModelList.take(5).toList();
-  //
-  //     isLoading = false; // Update loading state
-  //   });
-  // }
+  getNewsByQuery(String query) async {
+    String url = "";
+    int i = 0;
+    Map element;
+    url = "https://newsapi.org/v2/everything?q=$query&from=2024-11-15&sortBy=publishedAt&apiKey=4c6842085864405aa40688fd1a921192";
 
 
+    Response response = await get(Uri.parse(url));
+    Map data = jsonDecode(response.body);
+    setState(() {
+      for(element in data['articles'])
+        {
+
+          i++;
+          NewsQueryModel newsQueryModel = new NewsQueryModel();
+          newsQueryModel = NewsQueryModel.fromMap(element);
+          newsModelList.add(newsQueryModel);
+          setState(() {
+            isLoading = false;
+          });
+
+          if(i == 5) break;
+
+        }
+    });
+  }
   // getNewsByQuery(String query) async {
   //   String url =
-  //       "https://newsapi.org/v2/top-headlines?country=us&apiKey=4c6842085864405aa40688fd1a921192";
+  //       "https://newsapi.org/v2/everything?q=$query&from=2021-06-28&sortBy=publishedAt&apiKey=9bb7bf6152d147ad8ba14cd0e7452f2f";
   //   Response response = await get(Uri.parse(url));
   //   Map data = jsonDecode(response.body);
   //   setState(() {
@@ -89,13 +89,13 @@ class _HomeState extends State<Home> {
   //   });
   //
   // }
-
-
-
-
-
+  //
+  //
+  //
+  //
+  //
   // getNewsofIndia() async {
-  //   String url = "https://newsapi.org/v2/top-headlines?country=in&apiKey=4c6842085864405aa40688fd1a921192";
+  //   String url = "https://newsapi.org/v2/top-headlines?country=in&apiKey=9bb7bf6152d147ad8ba14cd0e7452f2f";
   //   Response response = await get(Uri.parse(url));
   //   Map data = jsonDecode(response.body);
   //   setState(() {
@@ -117,17 +117,16 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     // TODO: implement initState
-    getNews();
     super.initState();
-
-    //getNewsByQuery("corona");
-    //getNewsofIndia();
+    // getNewsByQuery("corona");
+    // getNewsofIndia();
+    getNews();
   }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("ARNE NEWS"),
+        title: Text("KHABAR"),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -147,7 +146,7 @@ class _HomeState extends State<Home> {
                       if ((searchController.text).replaceAll(" ", "") == "") {
                         print("Blank search");
                       } else {
-                        // Navigator.push(context, MaterialPageRoute(builder: (context) => Search(searchController.text)));
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => Category2(Query: searchController.text)));
                       }
                     },
                     child: Container(
@@ -164,6 +163,11 @@ class _HomeState extends State<Home> {
                       textInputAction: TextInputAction.search,
                       onSubmitted: (value) {
                         print(value);
+                        if(value == "")print("BLANK SPACE");
+                          else {
+                          Navigator.push(context, MaterialPageRoute(
+                              builder: (context) => Category2(Query: value)));
+                        }
                       },
                       decoration: InputDecoration(
                           border: InputBorder.none, hintText: "Search Health"),
@@ -181,7 +185,7 @@ class _HomeState extends State<Home> {
                     itemBuilder: (context, index) {
                       return InkWell(
                         onTap: () {
-                          print(navBarItem[index]);
+                          Navigator.push(context,MaterialPageRoute(builder:(context) =>Category2(Query: navBarItem[index])));
                         },
                         child: Container(
                           padding: EdgeInsets.symmetric(
@@ -202,54 +206,53 @@ class _HomeState extends State<Home> {
                     })),
             Container(
               margin: EdgeInsets.symmetric(vertical: 15),
-              child: CarouselSlider(
+              child: isLoading ?  Container(height: 200, child: Center(child: CircularProgressIndicator())) : CarouselSlider(
                 options: CarouselOptions(
                     height: 200, autoPlay: true, enlargeCenterPage: true),
-                    //items: items.map((item){
-                      // idhar ya toh remove this or use static images
-
-                    items: newsModelListCarousel.map((instance) {
+                items: newsModelListCarousel.map((instance) {
                   return Builder(builder: (BuildContext context) {
                     return Container(
-
-                        child : Card(
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)
-                            ),
-                            child : Stack(
-                                children : [
-                                  ClipRRect(
-                                      borderRadius : BorderRadius.circular(10),
-                                      //child : Image.asset("images/news.jpeg" , fit: BoxFit.fitHeight, height: double.infinity,)
-                                      //child : Image.network(instance.newsImg, fit: BoxFit.fitHeight, height: double.infinity,)
-                                      child : Image.network(instance.newsImg , fit: BoxFit.fitHeight, width: double.infinity,)
-                                  ) ,
-                                  Positioned(
-                                      left: 0,
-                                      right: 0,
-                                      bottom: 0,
-                                      child: Container(
-
-                                        decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(10),
-                                            gradient: LinearGradient(
-                                                colors: [
-                                                  Colors.black12.withOpacity(0),
-                                                  Colors.black
-                                                ],
-                                                begin: Alignment.topCenter,
-                                                end: Alignment.bottomCenter
-                                            )
-                                        ),
-                                        child : Container(
-                                            padding: EdgeInsets.symmetric(horizontal: 5 , vertical: 10),
-                                            //child:Text("NEWS HEADLINE IDHAR HAI" , style: TextStyle(fontSize: 18 , color: Colors.white , fontWeight: FontWeight.bold),)
-                                            child:Container( margin: EdgeInsets.symmetric(horizontal: 10), child: Text(instance.newsHead , style: TextStyle(fontSize: 18 , color: Colors.white , fontWeight: FontWeight.bold),))
-                                        ),
-                                      )
-                                  ),
-                                ]
-                            )
+                        child : InkWell(
+                          onTap:()
+                          {
+                            Navigator.push(context,MaterialPageRoute(builder: (context) => NewsView(instance.newsUrl)));
+                          },
+                          child: Card(
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)
+                              ),
+                              child : Stack(
+                                  children : [
+                                    ClipRRect(
+                                        borderRadius : BorderRadius.circular(10),
+                                        child : Image.network(instance.newsImg , fit: BoxFit.fitHeight, width: double.infinity,)
+                                    ) ,
+                                    Positioned(
+                                        left: 0,
+                                        right: 0,
+                                        bottom: 0,
+                                        child: Container(
+                          
+                                          decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(10),
+                                              gradient: LinearGradient(
+                                                  colors: [
+                                                    Colors.black12.withOpacity(0),
+                                                    Colors.black
+                                                  ],
+                                                  begin: Alignment.topCenter,
+                                                  end: Alignment.bottomCenter
+                                              )
+                                          ),
+                                          child : Container(
+                                              padding: EdgeInsets.symmetric(horizontal: 5 , vertical: 10),
+                                              child:Container( margin: EdgeInsets.symmetric(horizontal: 10), child: Text(instance.newsHead , style: TextStyle(fontSize: 18 , color: Colors.white , fontWeight: FontWeight.bold),))
+                                          ),
+                                        )
+                                    ),
+                                  ]
+                              )
+                          ),
                         )
                     );
                   });
@@ -270,6 +273,7 @@ class _HomeState extends State<Home> {
                       ],
                     ),
                   ),
+                  isLoading ? Container(height: MediaQuery.of(context).size.height - 350, child : Center(child: CircularProgressIndicator())):
                   ListView.builder(
                       physics: NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
@@ -328,7 +332,7 @@ class _HomeState extends State<Home> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ElevatedButton(onPressed: () {}, child: Text("SHOW MORE")),
+                        ElevatedButton(onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => Category2(Query: "Election")));}, child: Text("SHOW MORE")),
                       ],
                     ),
                   )
@@ -344,11 +348,28 @@ class _HomeState extends State<Home> {
   final List items = ["HELLO MAN", "NAMAS STAY", "DIRTY FELLOW"];
 }
 
-// AGAR IF WE wamt to have colorske dabbe being scrolled toh woh bhi kr sakte hai
 
-// import 'package:flutter/material.dart';
-// import 'package:carousel_slider/carousel_slider.dart';
-//
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // class Home extends StatefulWidget {
 //   const Home({Key? key}) : super(key: key);
 //
@@ -358,13 +379,94 @@ class _HomeState extends State<Home> {
 //
 // class _HomeState extends State<Home> {
 //   TextEditingController searchController = new TextEditingController();
+//   List<NewsQueryModel> newsModelList = <NewsQueryModel>[];
+//   List<NewsQueryModel> newsModelListCarousel = <NewsQueryModel>[];
 //   List<String> navBarItem = [
 //     "Top News",
 //     "India",
 //     "World",
-//     "Finacnce",
+//     "Finance",
 //     "Health"
 //   ];
+//
+//   bool isLoading = true;
+//
+//   // need to make a different function for the carousel
+//
+//   getNews()async {
+//     String url =
+//         "https://newsapi.org/v2/top-headlines?country=us&apiKey=4c6842085864405aa40688fd1a921192";
+//     Response response = await get(Uri.parse(url));
+//     Map data = jsonDecode(response.body);
+//     setState(() {
+//       data["articles"].forEach((element) {
+//         NewsQueryModel newsQueryModel = new NewsQueryModel();
+//         newsQueryModel = NewsQueryModel.fromMap(element);
+//         newsModelList.add(newsQueryModel);
+//         newsModelListCarousel.add(newsQueryModel);
+//         setState(() {
+//           isLoading = false;
+//         });
+//
+//       });
+//     });
+//
+//   }
+//
+//
+//
+//   // getNewsByQuery(String query) async {
+//   //   String url =
+//   //       "https://newsapi.org/v2/top-headlines?country=us&apiKey=4c6842085864405aa40688fd1a921192";
+//   //   Response response = await get(Uri.parse(url));
+//   //   Map data = jsonDecode(response.body);
+//   //   setState(() {
+//   //     data["articles"].forEach((element) {
+//   //       NewsQueryModel newsQueryModel = new NewsQueryModel();
+//   //       newsQueryModel = NewsQueryModel.fromMap(element);
+//   //       newsModelList.add(newsQueryModel);
+//   //       setState(() {
+//   //         isLoading = false;
+//   //       });
+//   //
+//   //     });
+//   //   });
+//   //
+//   // }
+//
+//
+//
+//
+//
+//   // getNewsofIndia() async {
+//   //   String url = "https://newsapi.org/v2/top-headlines?country=in&apiKey=4c6842085864405aa40688fd1a921192";
+//   //   Response response = await get(Uri.parse(url));
+//   //   Map data = jsonDecode(response.body);
+//   //   setState(() {
+//   //     data["articles"].forEach((element) {
+//   //       NewsQueryModel newsQueryModel = new NewsQueryModel();
+//   //       newsQueryModel = NewsQueryModel.fromMap(element);
+//   //       newsModelListCarousel.add(newsQueryModel);
+//   //       setState(() {
+//   //         isLoading = false;
+//   //       });
+//   //
+//   //     });
+//   //   });
+//   //
+//   //
+//   // }
+//
+//
+//   @override
+//   void initState() {
+//     // TODO: implement initState
+//     getNews();
+//     super.initState();
+//
+//     //getNewsByQuery("corona");
+//     //getNewsofIndia();
+//   }
 //   @override
 //   Widget build(BuildContext context) {
 //     return Scaffold(
@@ -423,7 +525,8 @@ class _HomeState extends State<Home> {
 //                     itemBuilder: (context, index) {
 //                       return InkWell(
 //                         onTap: () {
-//                           print(navBarItem[index]);
+//                           //Navigator.push(context,MaterialPageRoute(builder:(context) =>Category2(Query: navBarItem[index])));
+//                            print(navBarItem[index]);
 //                         },
 //                         child: Container(
 //                           padding: EdgeInsets.symmetric(
@@ -447,8 +550,10 @@ class _HomeState extends State<Home> {
 //               child: CarouselSlider(
 //                 options: CarouselOptions(
 //                     height: 200, autoPlay: true, enlargeCenterPage: true),
-//                 // IDHAR KRNA HAI KAAM
-//                 items: items.map((item) {
+//                     //items: items.map((item){
+//                       // idhar ya toh remove this or use static images
+//
+//                     items: newsModelListCarousel.map((instance) {
 //                   return Builder(builder: (BuildContext context) {
 //                     return Container(
 //
@@ -460,7 +565,9 @@ class _HomeState extends State<Home> {
 //                                 children : [
 //                                   ClipRRect(
 //                                       borderRadius : BorderRadius.circular(10),
-//                                       child : Image.asset("images/news2.jpeg" , fit: BoxFit.fitHeight, height: double.infinity,)
+//                                       //child : Image.asset("images/news.jpeg" , fit: BoxFit.fitHeight, height: double.infinity,)
+//                                       //child : Image.network(instance.newsImg, fit: BoxFit.fitHeight, height: double.infinity,)
+//                                       child : Image.network(instance.newsImg , fit: BoxFit.fitHeight, width: double.infinity,)
 //                                   ) ,
 //                                   Positioned(
 //                                       left: 0,
@@ -481,7 +588,8 @@ class _HomeState extends State<Home> {
 //                                         ),
 //                                         child : Container(
 //                                             padding: EdgeInsets.symmetric(horizontal: 5 , vertical: 10),
-//                                             child:Text("NEWS HEADLINE IDHAR HAI" , style: TextStyle(fontSize: 18 , color: Colors.white , fontWeight: FontWeight.bold),)
+//                                             //child:Text("NEWS HEADLINE IDHAR HAI" , style: TextStyle(fontSize: 18 , color: Colors.white , fontWeight: FontWeight.bold),)
+//                                             child:Container( margin: EdgeInsets.symmetric(horizontal: 10), child: Text(instance.newsHead , style: TextStyle(fontSize: 18 , color: Colors.white , fontWeight: FontWeight.bold),))
 //                                         ),
 //                                       )
 //                                   ),
@@ -510,7 +618,7 @@ class _HomeState extends State<Home> {
 //                   ListView.builder(
 //                       physics: NeverScrollableScrollPhysics(),
 //                       shrinkWrap: true,
-//                       itemCount: 3,
+//                       itemCount: newsModelList.length,
 //                       itemBuilder: (context, index) {
 //                         return Container(
 //                           margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -522,7 +630,7 @@ class _HomeState extends State<Home> {
 //                                 children: [
 //                                   ClipRRect(
 //                                       borderRadius: BorderRadius.circular(15),
-//                                       child: Image.asset("images/news2.jpeg")),
+//                                       child: Image.network(newsModelList[index].newsImg ,fit: BoxFit.fitHeight, height: 230,width: double.infinity, )),
 //
 //                                   Positioned(
 //                                       left: 0,
@@ -546,13 +654,13 @@ class _HomeState extends State<Home> {
 //                                             crossAxisAlignment: CrossAxisAlignment.start,
 //                                             children: [
 //                                               Text(
-//                                                 "NEWS HEADLINE",
+//                                                 newsModelList[index].newsHead,
 //                                                 style: TextStyle(
 //                                                     color: Colors.white,
 //                                                     fontSize: 18,
 //                                                     fontWeight: FontWeight.bold),
 //                                               ),
-//                                               Text("BLAJH BALH BLAH BLAH..." , style: TextStyle(color: Colors.white , fontSize: 12)
+//                                               Text(newsModelList[index].newsDes.length > 50 ? "${newsModelList[index].newsDes.substring(0,55)}...." : newsModelList[index].newsDes , style: TextStyle(color: Colors.white , fontSize: 12)
 //                                                 ,)
 //                                             ],
 //                                           )))
@@ -580,3 +688,4 @@ class _HomeState extends State<Home> {
 //
 //   final List items = ["HELLO MAN", "NAMAS STAY", "DIRTY FELLOW"];
 // }
+
