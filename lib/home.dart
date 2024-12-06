@@ -5,6 +5,7 @@ import 'package:untitled/model.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:http/http.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -94,24 +95,24 @@ class _HomeState extends State<Home> {
   //
   //
   //
-  // getNewsofIndia() async {
-  //   String url = "https://newsapi.org/v2/top-headlines?country=in&apiKey=9bb7bf6152d147ad8ba14cd0e7452f2f";
-  //   Response response = await get(Uri.parse(url));
-  //   Map data = jsonDecode(response.body);
-  //   setState(() {
-  //     data["articles"].forEach((element) {
-  //       NewsQueryModel newsQueryModel = new NewsQueryModel();
-  //       newsQueryModel = NewsQueryModel.fromMap(element);
-  //       newsModelListCarousel.add(newsQueryModel);
-  //       setState(() {
-  //         isLoading = false;
-  //       });
-  //
-  //     });
-  //   });
-  //
-  //
-  // }
+  getNewsofTech() async {
+    String url = "https://newsapi.org/v2/top-headlines?sources=techcrunch&apiKey=4c6842085864405aa40688fd1a921192";
+    Response response = await get(Uri.parse(url));
+    Map data = jsonDecode(response.body);
+    setState(() {
+      data["articles"].forEach((element) {
+        NewsQueryModel newsQueryModel = new NewsQueryModel();
+        newsQueryModel = NewsQueryModel.fromMap(element);
+        newsModelListCarousel.add(newsQueryModel);
+        setState(() {
+          isLoading = false;
+        });
+
+      });
+    });
+
+
+  }
 
 
   @override
@@ -121,6 +122,7 @@ class _HomeState extends State<Home> {
     // getNewsByQuery("corona");
     // getNewsofIndia();
     getNews();
+    getNewsofTech();
   }
   @override
   Widget build(BuildContext context) {
@@ -215,7 +217,10 @@ class _HomeState extends State<Home> {
                         child : InkWell(
                           onTap:()
                           {
-                            Navigator.push(context,MaterialPageRoute(builder: (context) => NewsView(instance.newsUrl)));
+                            //print("hello");
+                            launchUrl(Uri.parse(instance.newsUrl));
+                            // launchUrl(http://github.com/laaiva/newsapp);
+                            //Navigator.push(context,MaterialPageRoute(builder: (context) => NewsView(instance.newsUrl)));
                           },
                           child: Card(
                               shape: RoundedRectangleBorder(
